@@ -48,6 +48,7 @@ td:first-child,th:first-child{text-align:center}
 .k{padding:14px 0;border-radius:10px;border:1px solid var(--ln);background:var(--sf);color:var(--tx);font-size:17px}
 .k.op{background:var(--ac);color:var(--ic)}.k.eq{background:var(--pr);color:#fff;border-color:var(--pr)}
 .k:active{filter:brightness(.9)}
+label.ck{display:flex;align-items:center;gap:8px;color:var(--tx);font-size:15px;margin:8px 0}.ck input{width:auto}
 </style></head><body>
 <header><button class="ib" id="bk" aria-label="Volver">←</button><h1 id="ti"></h1><button class="ib" id="th" aria-label="Cambiar tema"></button></header>
 <main id="m"></main>
@@ -89,23 +90,34 @@ function home(){
  $('#m').innerHTML=`<h2>Calculadoras</h2><div class="grid">${Object.entries(TOOLS).map(([k,v])=>t(k,v[0],v[1])).join('')}</div><h2>Conversores</h2><div class="grid">${Object.entries(CV).map(([k,v])=>t(k,v.n,v.i)).join('')}</div>`;
 }
 
+const pasc=y=>{const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),t=h+l-7*m+114;return new Date(y,Math.floor(t/31)-1,t%31+1)};
+const FIJ=['1-1','1-3','1-5','14-5','15-5','12-6','15-8','29-9','8-12','25-12'];
+const isHol=d=>{if(FIJ.includes(d.getDate()+'-'+(d.getMonth()+1)))return true;const p=pasc(d.getFullYear());return +d==+addD(p,-3)||+d==+addD(p,-2)};
+const nxt=(d,m)=>m=='m'?addM(d,1):addD(d,+m);
 function loan(){
- $('#m').innerHTML=`<div class="card"><label>Importe del préstamo (Gs.)</label><input id="lp" inputmode="numeric" value="20.000.000">
- <div class="row"><div><label>Tasa de interés anual (%)</label><input id="lr" inputmode="decimal" value="18,5"></div><div><label>Frecuencia de pago</label><select id="lf"><option value="12">Mensual</option><option value="24">Quincenal</option><option value="52">Semanal</option></select></div></div>
- <div class="row"><div><label>Plazo</label><input id="lt" inputmode="numeric" value="1"></div><div><label>Unidad</label><select id="lu"><option value="12">Años</option><option value="1">Meses</option></select></div></div>
- <div class="row"><div><label>Sistema</label><select id="ls"><option value="f">Cuota fija</option><option value="a">Capital fijo</option></select></div><div><label>Fecha de inicio</label>${dateIn('ld',new Date())}</div></div></div><div id="lo"></div>`;
+ $('#m').innerHTML=`<div class="card"><label>Monto solicitado (Gs.)</label><input id="lp" inputmode="numeric" value="1.000.000">
+ <label>Interés (%)</label><input id="lr" inputmode="decimal" value="26">
+ <label>Cantidad de cuotas</label><input id="ln" inputmode="numeric" value="45">
+ <label>Modalidad</label><select id="lm"><option value="1">Diario</option><option value="7">Semanal</option><option value="15">Quincenal</option><option value="m">Mensual</option></select>
+ <label class="ck"><input type="checkbox" id="lc"> No cobrar domingos</label><label class="ck"><input type="checkbox" id="lh"> No cobrar feriados</label>
+ <label>Fecha de otorgamiento</label>${dateIn('ld',new Date())}<label>Primer vencimiento</label>${dateIn('lv',addD(new Date(),1))}</div><div id="lo"></div>`;
  wireDates();
  const calc=()=>{
-  const P=parseInt($('#lp').value.replace(/\D/g,''))||0,Rt=num($('#lr').value)||0,p=+$('#lf').value,n=Math.round((num($('#lt').value)||0)*$('#lu').value*p/12),sd=pd($('#ld').value),fix=$('#ls').value=='f';
-  if(!P||!n||!sd){$('#lo').innerHTML='<div class="card">Completa importe, plazo y una fecha válida (dd/mm/aaaa).</div>';return}
-  const r=Rt/100/p,pay=fix?(r?P*r/(1-Math.pow(1+r,-n)):P/n):0;let bal=P,rows='',ti=0,first=0;
-  for(let k=1;k<=n;k++){const it=bal*r,pr=fix?pay-it:P/n,pg=pr+it,d=p==12?addM(sd,k):addD(sd,(p==24?15:7)*k),end=k==n?0:bal-pr;if(k==1)first=pg;ti+=it;
-   rows+=`<tr><td>${k}<td>${fd(d)}<td>${gs(bal)}<td>${gs(pg)}<td>${gs(pr)}<td>${gs(it)}<td>${gs(end)}`;bal=end}
-  const nm={12:'mensual',24:'quincenal',52:'semanal'}[p];
-  $('#lo').innerHTML=`<div class="sum"><div><small>${fix?'Pago '+nm:'Primer pago'}</small><b>Gs. ${gs(first)}</b></div><div><small>Número de pagos</small><b>${n}</b></div><div><small>Total de intereses</small><b>Gs. ${gs(ti)}</b></div><div><small>Costo total</small><b>Gs. ${gs(P+ti)}</b></div></div>
-  <div class="tw"><table><thead><tr><th>N.º<th>Fecha de pago<th>Saldo inicial<th>Pago<th>Capital<th>Interés<th>Saldo final</thead><tbody>${rows}</tbody></table></div>`;
+  const P=parseInt($('#lp').value.replace(/\D/g,''))||0,pc=num($('#lr').value),n=parseInt($('#ln').value)||0,m=$('#lm').value,fv=pd($('#lv').value),sk=$('#lc').checked,hk=$('#lh').checked;
+  if(!P||isNaN(pc)||n<1||!fv){$('#lo').innerHTML='<div class="card">Completa monto, interés, cuotas y una fecha válida (dd/mm/aaaa).</div>';return}
+  if(n>1000){$('#lo').innerHTML='<div class="card">Máximo 1000 cuotas.</div>';return}
+  const ok=d=>!(sk&&d.getDay()==0)&&!(hk&&isHol(d)),ds=[];
+  if(m=='1'){let d=fv;while(ds.length<n){if(ok(d))ds.push(d);d=addD(d,1)}}
+  else for(let k=0;k<n;k++){let d=m=='m'?addM(fv,k):addD(fv,k*+m),g=0;while(!ok(d)&&g++<10)d=addD(d,1);ds.push(d)}
+  const it=P*pc/100,tot=P+it,q=Math.round(tot/n),W=['dom','lun','mar','mié','jue','vie','sáb'];let bal=tot,rows='';
+  ds.forEach((d,k)=>{const pg=k==n-1?bal:q;bal-=pg;rows+=`<tr><td>${k+1}<td>${fd(d)} <small>${W[d.getDay()]}</small><td>${gs(pg)}<td>${gs(Math.max(bal,0))}`});
+  $('#lo').innerHTML=`<div class="card" style="line-height:1.7">Interés: <b>Gs. ${gs(it)}</b><br>Total a devolver: <b>Gs. ${gs(tot)}</b><br>Cuota: <b>Gs. ${gs(q)}</b><br>Último vencimiento: <b>${fd(ds[n-1])}</b></div>
+  <div class="tw"><table><thead><tr><th>N.º<th>Vencimiento<th>Cuota<th>Saldo</thead><tbody>${rows}</tbody></table></div>`;
  };
- $$('#m input,#m select').forEach(e=>e.addEventListener('input',()=>{if(e.id=='lp')e.value=e.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.');calc()}));
+ $$('#m input,#m select').forEach(e=>e.addEventListener('input',()=>{
+  if(e.id=='lp')e.value=e.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  if(e.id=='ld'||e.id=='lm'){const o=pd($('#ld').value);if(o)$('#lv').value=fd(nxt(o,$('#lm').value))}
+  calc()}));
  calc();
 }
 

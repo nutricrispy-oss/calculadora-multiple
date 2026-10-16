@@ -87,7 +87,10 @@ let R='',ex='',ans=0,deg=true,done=false;
 
 function home(){
  const t=(id,n,i)=>`<a class="tile" href="#${id}"><i>${i}</i>${n}</a>`;
- $('#m').innerHTML=`<h2>Calculadoras</h2><div class="grid">${Object.entries(TOOLS).map(([k,v])=>t(k,v[0],v[1])).join('')}</div><h2>Conversores</h2><div class="grid">${Object.entries(CV).map(([k,v])=>t(k,v.n,v.i)).join('')}</div>`;
+ const inst=!(matchMedia('(display-mode:standalone)').matches||navigator.standalone);
+ $('#m').innerHTML=`${inst?'<button class="btn" id="ins" style="margin:0 0 4px">📲 Instalar en el celular</button><div id="inh" style="color:var(--mu);font-size:13px;margin:6px 2px 0"></div>':''}<h2>Calculadoras</h2><div class="grid">${Object.entries(TOOLS).map(([k,v])=>t(k,v[0],v[1])).join('')}</div><h2>Conversores</h2><div class="grid">${Object.entries(CV).map(([k,v])=>t(k,v.n,v.i)).join('')}</div>`;
+
+ if($('#ins'))$('#ins').onclick=async()=>{if(ip){ip.prompt();await ip.userChoice;ip=null}else $('#inh').textContent='Android (Chrome): menú ⋮ → «Instalar aplicación». iPhone (Safari): botón Compartir → «Añadir a pantalla de inicio».'};
 }
 
 const pasc=y=>{const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),t=h+l-7*m+114;return new Date(y,Math.floor(t/31)-1,t%31+1)};
@@ -199,6 +202,9 @@ document.addEventListener('keydown',e=>{
  if(/^[\d.+()^!%]$/.test(k)||m[k]){e.preventDefault();press(m[k]||k)}
 });
 
+let ip=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e});
+addEventListener('appinstalled',()=>{ip=null;route()});
 let th=LS.g('theme',matchMedia('(prefers-color-scheme:dark)').matches?'d':'l');
 const applyTheme=()=>{document.documentElement.dataset.t=th;$('#th').textContent=th=='d'?'☀':'☾';$('meta[name=theme-color]').content=th=='d'?'#0f3b2c':'#14573f'};
 $('#th').onclick=()=>{th=th=='d'?'l':'d';LS.s('theme',th);applyTheme()};
